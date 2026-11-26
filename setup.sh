@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-# setup.sh — Universal SRI + CDN updater for 指读宝 (auto-discovers all css/js)
-# Usage:
-#   ./setup.sh                    # auto-detect owner/repo; content-hash version
-#   ./setup.sh user repo          # specify owner + repo
-#   ./setup.sh user repo v1.0.0   # specify owner + repo + version
+# setup.sh — Refined SRI + CDN updater for 指读宝 (CI‑safe)
 set -euo pipefail
 
 # ============ REPOSITORY ============
@@ -30,19 +26,34 @@ else
   REPO="${GITHUB_REPO:-$(basename "$REPO_ROOT")}"
 fi
 
-# --- Version resolution ---
+# ============ VERSION RESOLUTION ============
 if [ -n "${3:-}" ]; then
   VERSION="$3"
 elif [ -n "${SRI_VERSION:-}" ]; then
   VERSION="$SRI_VERSION"
 else
-  HASH=""
-  if [ -d css ] || [ -d js ]; then
-    {
-      [ -d css ] && find css -maxdepth 1 -type f -name '*.css' -print0 | sort -z | xargs -0 cat 2>/dev/null
-      [ -d js ]  && find js  -maxdepth 1 -type f -name '*.js'  -print0 | sort -z | xargs -0 cat 2>/dev/null
-    } | openssl dgst -sha256 2>/dev/null | awk '{print $NF}' | cut -c1-12 && HASH=$(cat) || true
+  # Safe file list construction (no xargs, no hanging)
+  FILE_LIST=()
+  if [ -d css ]; then
+    while IFS= read -r -d '' f; do
+      FILE_LIST+=("$f")
+    done < <(find css -maxdepth 1 -type f -name '*.css' -print0 | sort -z)
   fi
+  if [ -d js ]; then
+    while IFS= read -r -d '' f; do
+      FILE_LIST+=("$f")
+    done < <(find js -maxdepth 1 -type f -name '*.js' -print0 | sort -z)
+  fi
+
+  if [ ${#FILE_LIST[@]} -gt 0 ]; then
+    HASH=$(cat "${FILE_LIST[@]}" 2>/dev/null \
+      | openssl dgst -sha256 2>/dev/null \
+      | awk '{print $NF}' \
+      | cut -c1-12)
+  else
+    HASH=""
+  fi
+
   if [ -n "$HASH" ]; then
     VERSION="$HASH"
   else
@@ -52,7 +63,7 @@ fi
 
 [[ "$VERSION" =~ ^[vV] ]] || VERSION="v${VERSION}"
 
-# --- Portable in-place sed ---
+# --- Portable in‑place sed ---
 if [[ "${OSTYPE:-}" == darwin* ]]; then
   sedi() { sed -i '' "$@"; }
 else
@@ -63,32 +74,21 @@ echo "🔐 Owner:   ${OWNER}"
 echo "🔐 Repo:    ${REPO}"
 echo "🔐 Version: ${VERSION}"
 
-# ============ AUTO-DISCOVER ASSETS ============
+# ============ DISCOVER ASSETS (for later updates) ============
 ASSETS=()
-
-if [ -d "css" ]; then
+if [ -d css ]; then
   while IFS= read -r -d '' f; do
-    f="${f#./}"
-    ASSETS+=("$f")
+    ASSETS+=("${f#./}")
   done < <(find css -maxdepth 1 -type f -name '*.css' -print0 | sort -z)
 fi
-
-if [ -d "js" ]; then
+if [ -d js ]; then
   while IFS= read -r -d '' f; do
-    f="${f#./}"
-    ASSETS+=("$f")
+    ASSETS+=("${f#./}")
   done < <(find js -maxdepth 1 -type f -name '*.js' -print0 | sort -z)
 fi
 
-if [ ${#ASSETS[@]} -eq 0 ]; then
-  echo "⚠️  No CSS or JS assets found in css/ or js/" >&2
-fi
-
-echo "📦 Discovered ${#ASSETS[@]} asset(s): ${ASSETS[*]}"
-
-# ============ SRI HASHES ============
+# ============ GENERATE SRI HASHES ============
 declare -A SRI
-
 for f in "${ASSETS[@]}"; do
   if [ -f "$f" ]; then
     hash=$(openssl dgst -sha384 -binary "$f" | openssl base64 -A)
@@ -105,49 +105,37 @@ if [ ! -f index.html ]; then
   exit 1
 fi
 
-# ============ HELPER: escape for sed ============
-sed_escape() {
-  printf '%s' "$1" | sed 's|\\|\\\\|g; s|/|\\/|g; s|\.|\\.|g; s|*|\\*|g; s|+|\\+|g; s|\[|\\[|g; s|\]|\\]|g'
-}
-
 # ============ UPDATE index.html ============
 cp index.html index.html.bak
 
-# --- 1. Update __APP_CONFIG__ version ---
-sedi "s|version: '[^\']*'|version: '${VERSION}'|g" index.html
+# 1. App config version
+sedi "s|version: '[^']*'|version: '${VERSION}'|g" index.html
 
-# --- 2. Update owner/repo in base path ---
-sedi "s|/gh/[a-zA-Z0-9_.-]*\/[a-zA-Z0-9_.-]*@|/gh/${OWNER}/${REPO}@|g" index.html
+# 2. CDN base path
+sedi "s|/gh/[a-zA-Z0-9_.-]*/[a-zA-Z0-9_.-]*@|/gh/${OWNER}/${REPO}@|g" index.html
 
-# --- 3. Update version in all CDN URLs ---
-sedi "s|@v[0-9][^/]*/|@${VERSION}/|g" index.html
-sedi "s|@[0-9]\{14,\}/|@${VERSION}/|g" index.html
+# 3. Version in URLs
+sedi "s|@[v]*[0-9][^/]*/|@${VERSION}/|g" index.html
 
-# --- 4. Update integrity on <link> (CSS) and <script> (JS) tags ---
+# 4. Integrity attributes (multi‑line ranges, like the demo)
 for f in "${ASSETS[@]}"; do
   sri="${SRI[$f]:-}"
   [ -n "$sri" ] || continue
 
-  f_esc="$(sed_escape "$f")"
-  sri_esc="$(printf '%s' "$sri" | sed 's|/|\\/|g')"
-
   if [[ "$f" == css/* ]]; then
-    sedi "/<link.*${f_esc}/ s|integrity=\"[^\"]*\"|integrity=\"${sri_esc}\"|" index.html
+    sedi "/<link rel=\"stylesheet\"/,/crossorigin=/ s|integrity=\"[^\"]*\"|integrity=\"${sri}\"|" index.html
   elif [[ "$f" == js/* ]]; then
-    sedi "/<script.*${f_esc}/ s|integrity=\"[^\"]*\"|integrity=\"${sri_esc}\"|" index.html
+    fname=$(basename "$f")
+    sedi "/<script[^>]*${fname}/,/crossorigin=/ s|integrity=\"[^\"]*\"|integrity=\"${sri}\"|" index.html
   fi
 done
 
-# --- 5. Update sriHashes entries inside __APP_CONFIG__ ---
+# 5. sriHashes inside __APP_CONFIG__
 for f in "${ASSETS[@]}"; do
   sri="${SRI[$f]:-}"
   [ -n "$sri" ] || continue
-
-  f_basename="$(basename "$f")"
-  f_base_esc="$(sed_escape "$f_basename")"
-  sri_esc="$(printf '%s' "$sri" | sed 's|/|\\/|g')"   # ← ONLY CHANGE: escape / for replacement
-
-  sedi "/['\"]${f_base_esc}['\"]:/ s|['\"]sha384-[^'\"]*['\"]|'${sri_esc}'|g" index.html
+  fname=$(basename "$f")
+  sedi "/'${fname}':/ s|'sha384-[^']*'|'${sri}'|g" index.html
 done
 
 # ============ DIFF SUMMARY ============
@@ -159,7 +147,6 @@ diff -u index.html.bak index.html \
   | grep -v '^---\|^+++' \
   | head -60 || true
 echo "─────────────────────────────────────────────"
-
 rm -f index.html.bak
 
 echo ""
