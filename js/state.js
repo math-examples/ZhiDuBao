@@ -10,6 +10,7 @@ window.State = {
   userSelectedVoiceRef: null,
   autoSelectDone: false,
   autoSelectRetries: 0,
+  MAX_AUTO_RETRIES: 8,
   longPressTimer: null,
   longPressFired: false,
   wordUtterance: null,

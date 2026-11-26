@@ -29,6 +29,7 @@
       if (loaded === cfg.files.length) {
         initVersionTag();
         if (window.fillVoiceList) window.fillVoiceList();
+        if (window.initApp) window.initApp();
       }
     };
     s.onerror = function() {

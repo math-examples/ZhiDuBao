@@ -8,13 +8,13 @@
 <title>指读宝</title>
 <script>
 window.__APP_CONFIG__ = {
-  version: 'v1.0.6',
+  version: 'v1.0.7',
   base: '/gh/math-examples/ZhiDuBao@',
   files: ['config.js', 'state.js', 'ui.js', 'speech.js'],
   sriHashes: {
-    'config.js': 'sha384-e3+TGDLCvB0GxlyNnKBtQ7zmJTbT14kCGp6ePQKbjLW0A2HeY2mxSMeN4FpKg3LY',
-    'state.js':  'sha384-5xFyQytmOLQHvvMQZlcC8USoXpk2u6fuHfPEpfMyT/13fNWG6Cox2IHqUfeTzdB4',
-    'ui.js':     'sha384-W202Jaa+fJOtAR5ZB/uneGMhTI+zNK+FJfGsAPDNAs8U0Te7sTtfev2zDnNXq4aM',
+    'config.js': 'sha384-FClKicmCuQBY2Q6+SGlgtR9GOT9FMuEjUuozacVGr7utwcPEe6IteAUEFEI6JRHP',
+    'state.js':  'sha384-C7yAerdFtUP2lgucVxtx5RRynkfCS77YBxJnvcggpvNpckdWAygA2VVwi7Sq1ls3',
+    'ui.js':     'sha384-ZnJtFF1ZDVw/ke0jZ7IhGE/5pG3DonY+xtURqzCVoOfKUurQywlNEvv7ZHbK6b5v',
     'speech.js': 'sha384-d4jGlWK5v+9HDnuLl18bGNayxwD2gtmprUYR/quYYC48jUWhrhXbdgLRZvpL9lrI'
   },
   cdns: [
@@ -24,11 +24,10 @@ window.__APP_CONFIG__ = {
   ]
 };
 </script>
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.6/css/app.css"
-      integrity="sha384-V3PnQwSflLJMUXwEluRiRZfPoN0YK70FmEZlvPe0QGB3ykKtE/4elqAP8MEW6ljd"
-      crossorigin="anonymous"
-      onerror="this.href='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.6/css/app.css'">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.7/css/app.css"
+  integrity="sha384-zG66XLzLfUeXHwonULJ9NJ+jQ9tsMlQMmlIlxjsuOkjOOuo7BSyCUn/XXa9O+j8q"
+  crossorigin="anonymous"
+  onerror="this.href='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.7/css/app.css'">
 </head>
 <body>
 <div class="box">
@@ -36,8 +35,8 @@ window.__APP_CONFIG__ = {
   <div id="log">
     <span class="log-text"></span>
     <button class="fullscreen-btn" id="fs-toggle" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
-      <svg id="fs-icon-expand" viewBox="0 0 24 24"><path d="M16 3h3a2 2 0 0 1 2 2v3 M8 21H5a2 2 0 0 1-2-2v-3" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
-      <svg id="fs-icon-close" style="display:none;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
+      <svg id="fs-icon-expand" viewBox="0 0 24 24"><path d="M16 3h3a2 2 0 0 1 2 2v3 M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
+      <svg id="fs-icon-close" style="display:none;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
   </div>
 
@@ -60,7 +59,6 @@ window.__APP_CONFIG__ = {
     <button id="showAllVoices" class="secondary" style="padding: 6px 10px; font-size: 13px; min-width: 60px;">🌐 All</button>
     <button id="about-btn" class="secondary" style="padding: 6px 10px; font-size: 13px; min-width: 60px; margin-left: auto;">📋 简介</button>
   </div>
-
   <div class="row" id="editor-controls2">
     <div class="bub-row">
       <span class="bub-label">语速</span>
@@ -87,19 +85,16 @@ window.__APP_CONFIG__ = {
       <input type="range" id="pitch" min="0" max="2" step="0.1" value="1" style="display:none;" />
     </div>
   </div>
-
   <div class="row" id="main-buttons">
     <button id="toggle">▶ Read</button>
     <button id="paste" class="secondary">📋 粘贴</button>
     <button id="edit-toggle" class="secondary">✏️ 编辑</button>
     <input type="file" id="fileInput" accept=".txt" style="display:none;" />
   </div>
-
   <div class="row" id="reader-controls">
     <button id="toggle-reader">▶ Read</button>
     <button id="back" class="secondary">✏️ 编辑</button>
   </div>
-
   <div id="editor">
     <textarea id="text" placeholder="Type or paste text here to read aloud…"></textarea>
   </div>
@@ -172,10 +167,10 @@ window.__APP_CONFIG__ = {
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.6/js/loader.js"
-        integrity="sha384-ARPnUn1PUOBuXykO3AyG4PRP/kUCSNFOj9JET0HKiKqFOGgSLWIThPMAFnX1e/Qy"
-        crossorigin="anonymous"
-        onerror="this.src='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.6/js/loader.js'">
+<script src="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.7/js/loader.js"
+  integrity="sha384-gmfEUYoMfuDIfFY8Lhzxqz1qoIxYfVNJEjHKo2dNp8j0ovuRYY3ufUHOH8QmI80M"
+  crossorigin="anonymous"
+  onerror="this.src='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.7/js/loader.js'">
 </script>
 </body>
 </html>
