@@ -3,8 +3,15 @@ import { APP_CONFIG } from './config.js';
 import { getSynth } from './speech.js';
 import { setupBubbleSlider } from './slider.js';
 import { initTheme } from './theme.js';
+import {
+  initVoices,
+  setupVoiceSelectListener,
+  setupShowAllVoicesListener,
+  switchVoiceWhilePlaying,
+  getCurrentVoice
+} from './voice.js';
 
-export function initUI() {
+export async function initUI() {
   const $ = (s) => document.querySelector(s);
   const synth = getSynth();
 
@@ -44,164 +51,6 @@ export function initUI() {
     if (msg && !msg.startsWith('🔊')) {
       State.clearLogTimer = setTimeout(() => { log(''); }, 3000);
     }
-  }
-
-  function normalizeLang(lang) {
-    return (lang || '').toLowerCase().replace(/_/g, '-').replace(/\s.*$/, '');
-  }
-
-  function getLangPrefix(lang) {
-    return (lang || '').toLowerCase().split(/[-_]/)[0];
-  }
-
-  function getBrowserLang() {
-    const preferred = (navigator.languages || []).filter(Boolean);
-    if (preferred.length > 0) {
-      const raw = preferred[0];
-      return { full: normalizeLang(raw), prefix: getLangPrefix(raw) };
-    }
-    const raw = navigator.language || navigator.userLanguage || 'en-US';
-    return { full: normalizeLang(raw), prefix: getLangPrefix(raw) };
-  }
-
-  function findBestVoice(voiceList, targetFull, targetPrefix) {
-    if (!voiceList.length) return null;
-    let best = voiceList.find(v => normalizeLang(v.lang) === targetFull);
-    if (best) return best;
-    best = voiceList.find(v => getLangPrefix(v.lang) === targetPrefix);
-    if (best) return best;
-    return null;
-  }
-
-  async function loadVoices(timeout = 3000) {
-    return new Promise((resolve) => {
-      let list = synth.getVoices();
-      if (list.length) return resolve(list);
-
-      const done = () => {
-        list = synth.getVoices();
-        if (list.length) {
-          synth.removeEventListener('voiceschanged', done);
-          resolve(list);
-        }
-      };
-      synth.addEventListener('voiceschanged', done);
-      setTimeout(() => resolve(synth.getVoices()), timeout);
-    });
-  }
-
-  async function fillVoiceList() {
-    State.voices = await loadVoices();
-    const previouslySelectedVoice = State.userSelectedVoiceRef
-      ? State.voices.find(v => v.name === State.userSelectedVoiceRef.name && v.lang === State.userSelectedVoiceRef.lang)
-      : null;
-
-    voiceSelect.innerHTML = '';
-    if (!State.voices.length) {
-      voiceSelect.appendChild(new Option('No voices detected', ''));
-      return;
-    }
-
-    State.voices.forEach((v, i) => {
-      voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' · Cloud'}`,
-        i
-      ));
-    });
-
-    if (!State.userHasPickedVoice && !State.autoSelectDone) {
-      autoSelectVoice();
-    } else if (previouslySelectedVoice) {
-      const restoredIdx = State.voices.indexOf(previouslySelectedVoice);
-      if (restoredIdx >= 0) {
-        voiceSelect.value = restoredIdx;
-        log('🔊 ' + previouslySelectedVoice.name + ' (' + previouslySelectedVoice.lang + ')');
-      }
-    }
-  }
-
-  function autoSelectVoice() {
-    if (State.userHasPickedVoice || State.autoSelectDone) return;
-    if (!State.voices.length) return;
-
-    const { full, prefix } = getBrowserLang();
-    const best = findBestVoice(State.voices, full, prefix);
-
-    if (best) {
-      State.autoSelectDone = true;
-      voiceSelect.value = State.voices.indexOf(best);
-      State.userSelectedVoiceRef = { name: best.name, lang: best.lang };
-      log('🔊 ' + best.name + ' (' + best.lang + ')');
-      filterVoiceListToLang(best.lang);
-    } else {
-      State.autoSelectRetries++;
-      if (State.autoSelectRetries < State.MAX_AUTO_RETRIES) {
-        setTimeout(autoSelectVoice, Math.min(300 * State.autoSelectRetries, 2000));
-      } else {
-        const enVoice = State.voices.find(v => getLangPrefix(v.lang) === 'en') || State.voices[0];
-        if (enVoice) {
-          State.autoSelectDone = true;
-          voiceSelect.value = State.voices.indexOf(enVoice);
-          State.userSelectedVoiceRef = { name: enVoice.name, lang: enVoice.lang };
-          log('🔊 ' + enVoice.name + ' (' + enVoice.lang + ')');
-          filterVoiceListToLang(enVoice.lang);
-        }
-      }
-    }
-  }
-
-  function filterVoiceListToLang(targetLang) {
-    if (!targetLang || !State.voices.length) return;
-    const prefix = getLangPrefix(targetLang);
-    const matching = State.voices.filter(v => getLangPrefix(v.lang) === prefix);
-    if (matching.length <= 1) return;
-
-    const currentVoice = State.voices[voiceSelect.value];
-    voiceSelect.innerHTML = '';
-    matching.forEach(v => {
-      voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' · Cloud'}`,
-        State.voices.indexOf(v)
-      ));
-    });
-
-    if (currentVoice) {
-      const stillThere = matching.findIndex(v => v.name === currentVoice.name && v.lang === currentVoice.lang);
-      if (stillThere >= 0) {
-        voiceSelect.value = State.voices.indexOf(currentVoice);
-        log('🔊 ' + currentVoice.name + ' (' + currentVoice.lang + ')');
-      }
-    }
-  }
-
-  function showAllVoices() {
-    if (!State.voices.length) return;
-    const currentVoice = State.voices[voiceSelect.value];
-    voiceSelect.innerHTML = '';
-    State.voices.forEach((v, i) => {
-      voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' · Cloud'}`,
-        i
-      ));
-    });
-    if (currentVoice) {
-      const idx = State.voices.findIndex(v => v.name === currentVoice.name && v.lang === currentVoice.lang);
-      if (idx >= 0) {
-        voiceSelect.value = idx;
-        log('🔊 ' + currentVoice.name + ' (' + currentVoice.lang + ')');
-      }
-    }
-  }
-
-  function switchVoiceWhilePlaying() {
-    const savedIndex = State.currentIndex;
-    State.runId++;
-    synth.cancel();
-    setTimeout(() => {
-      if (!State.isPlaying || State.runId === 0) return;
-      State.currentIndex = savedIndex;
-      speakFrom(savedIndex);
-    }, 500);
   }
 
   function updateToggleBtn() {
@@ -245,7 +94,7 @@ export function initUI() {
     if (State.isPlaying) doStop();
 
     State.wordUtterance = new SpeechSynthesisUtterance(word);
-    const voice = State.voices[voiceSelect.value];
+    const voice = getCurrentVoice();
     State.wordUtterance.lang = voice ? voice.lang : 'en-US';
     State.wordUtterance.rate = parseFloat(rateEl.value);
     State.wordUtterance.pitch = parseFloat(pitchEl.value);
@@ -524,7 +373,7 @@ export function initUI() {
       highlightParagraph(State.currentIndex);
 
       const u = new SpeechSynthesisUtterance(State.paragraphs[State.currentIndex]);
-      const voice = State.voices[voiceSelect.value];
+      const voice = getCurrentVoice();
       u.lang = voice ? voice.lang : 'en-US';
       u.rate = parseFloat(rateEl.value);
       u.pitch = parseFloat(pitchEl.value);
@@ -759,40 +608,6 @@ export function initUI() {
     }
   });
 
-  fillVoiceList();
-  if (typeof synth.onvoiceschanged !== 'undefined') {
-    synth.onvoiceschanged = fillVoiceList;
-  }
-
-  [500, 1000, 2000, 3000, 5000].forEach((delay, i, arr) => {
-    setTimeout(() => {
-      if (!State.voices.length) fillVoiceList();
-      else if (!State.autoSelectDone) autoSelectVoice();
-      if (i === arr.length - 1 && !State.autoSelectDone) {
-        setTimeout(() => {
-          if (!State.autoSelectDone && State.voices.length) autoSelectVoice();
-        }, 1000);
-      }
-    }, delay);
-  });
-
-  voiceSelect.addEventListener('change', () => {
-    State.userHasPickedVoice = true;
-    State.autoSelectDone = true;
-    const v = State.voices[voiceSelect.value];
-    if (v) {
-      State.userSelectedVoiceRef = { name: v.name, lang: v.lang };
-      log('🔊 ' + v.name + ' (' + v.lang + ')');
-      filterVoiceListToLang(v.lang);
-    }
-    if (State.isPlaying) switchVoiceWhilePlaying();
-  });
-
-  showAllBtn.addEventListener('click', () => {
-    showAllVoices();
-    log('Showing all voices');
-  });
-
   setupBubbleSlider(
     document.getElementById('rateTrack'),
     document.getElementById('rateFill'),
@@ -812,6 +627,22 @@ export function initUI() {
     document.getElementById('pitch')
   );
   initTheme();
+  
+  // ─── Voice system ───
+  const restartPlayback = () => {
+    const savedIndex = State.currentIndex;
+    State.runId++;
+    getSynth().cancel();
+    setTimeout(() => {
+      if (!State.isPlaying || State.runId === 0) return;
+      State.currentIndex = savedIndex;
+      speakFrom(savedIndex);   // ← still in ui.js until Step 4
+    }, 500);
+  };
+
+  await initVoices(voiceSelect, log, restartPlayback);
+  setupVoiceSelectListener();
+  setupShowAllVoicesListener(showAllBtn);
 
   if (State.isHrefMode()) {
     mainButtons.style.display = 'none';
