@@ -128,7 +128,7 @@ export function setupLongPress(el) {
     State.longPressFired = false;
 
     // Warm up speech engine on first interaction (href mode needs explicit user gesture)
-    if (!State.warmed && State.isHrefMode && !State.fsEverClicked) {
+    if (!State.warmed && State.isHrefMode() && !State.fsEverClicked) {
       State.warmed = true;
       const w = new SpeechSynthesisUtterance(' ');
       w.volume = 0; w.rate = 10; w.pitch = 1;

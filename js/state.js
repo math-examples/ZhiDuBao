@@ -21,8 +21,6 @@ export const State = {
   barVisible: true,
   hideTimer: null,
   clearLogTimer: null,
-  initialDistance: null,
-  initialFontSize: 17,
   urlParams: new URLSearchParams(window.location.search),
 
   isHrefMode() { return this.urlParams.has('href'); },

@@ -100,6 +100,7 @@ export async function initUI() {
 
   initGesture(elements, log);
   initFullscreen(elements);
+  setupLongPress(elements.reader);
 
   // ─── Toggle buttons ───
   elements.toggleBtn.addEventListener('click', () => {
