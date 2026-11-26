@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup.sh — Universal SRI + CDN updater for 指读宝 (auto-discovers all css/js)
+# setup.sh — Universal SRI + CDN updater for 指读宝
 # Usage:
 #   ./setup.sh                    # auto-detect owner/repo; content-hash version
 #   ./setup.sh user repo          # specify owner + repo
@@ -41,7 +41,7 @@ else
     {
       [ -d css ] && find css -maxdepth 1 -type f -name '*.css' -print0 | sort -z | xargs -0 cat 2>/dev/null
       [ -d js ]  && find js  -maxdepth 1 -type f -name '*.js'  -print0 | sort -z | xargs -0 cat 2>/dev/null
-    } | openssl dgst -sha256 2>/dev/null | awk '{print $NF}' | cut -c1-12 && HASH=$(cat) || true
+    } | openssl dgst -sha256 2>/dev/null | awk '{print $NF}' | cut -c1-12 | tr -d '\n' && HASH=$(cat) || true
   fi
   if [ -n "$HASH" ]; then
     VERSION="$HASH"
@@ -100,54 +100,59 @@ for f in "${ASSETS[@]}"; do
   fi
 done
 
+# --- loader.js (special case) ---
+LOADER_SRI=""
+if [ -f js/loader.js ]; then
+  loader_hash=$(openssl dgst -sha384 -binary js/loader.js | openssl base64 -A)
+  LOADER_SRI="sha384-${loader_hash}"
+  echo "  ✅ js/loader.js → sha384-${loader_hash:0:20}..."
+fi
+
 if [ ! -f index.html ]; then
   echo "❌ index.html not found" >&2
   exit 1
 fi
 
-# ============ HELPER: escape for sed ============
-sed_escape() {
-  printf '%s' "$1" | sed 's|\\|\\\\|g; s|/|\\/|g; s|\.|\\.|g; s|*|\\*|g; s|+|\\+|g; s|\[|\\[|g; s|\]|\\]|g'
-}
-
 # ============ UPDATE index.html ============
 cp index.html index.html.bak
 
 # --- 1. Update __APP_CONFIG__ version ---
-sedi "s|version: '[^\']*'|version: '${VERSION}'|g" index.html
+sedi "s#version: '[^\']*'#version: '${VERSION}'#g" index.html
 
 # --- 2. Update owner/repo in base path ---
-sedi "s|/gh/[a-zA-Z0-9_.-]*\/[a-zA-Z0-9_.-]*@|/gh/${OWNER}/${REPO}@|g" index.html
+sedi "s#/gh/[a-zA-Z0-9_.-]*/[a-zA-Z0-9_.-]*@#/gh/${OWNER}/${REPO}@#g" index.html
 
 # --- 3. Update version in all CDN URLs ---
-sedi "s|@v[0-9][^/]*/|@${VERSION}/|g" index.html
-sedi "s|@[0-9]\{14,\}/|@${VERSION}/|g" index.html
+sedi "s#@[vV]\?[0-9][^/]*/#@${VERSION}/#g" index.html
+sedi "s#@[0-9]\{14,\}/#@${VERSION}/#g" index.html
 
-# --- 4. Update integrity on <link> (CSS) and <script> (JS) tags ---
+# --- 4. Update integrity on <link> and <script> tags (by filename) ---
 for f in "${ASSETS[@]}"; do
   sri="${SRI[$f]:-}"
   [ -n "$sri" ] || continue
 
-  f_esc="$(sed_escape "$f")"
-  sri_esc="$(printf '%s' "$sri" | sed 's|/|\\/|g')"
+  base=$(basename "$f")
 
-  if [[ "$f" == css/* ]]; then
-    sedi "/<link.*${f_esc}/ s|integrity=\"[^\"]*\"|integrity=\"${sri_esc}\"|" index.html
-  elif [[ "$f" == js/* ]]; then
-    sedi "/<script.*${f_esc}/ s|integrity=\"[^\"]*\"|integrity=\"${sri_esc}\"|" index.html
-  fi
+  # 匹配包含该文件名的标签，替换 integrity
+  sedi "/[a-z]*=\"[^\"]*${base}[^\"]*\"/ s#integrity=\"[^\"]*\"#integrity=\"${sri}\"#g" index.html
 done
 
-# --- 5. Update sriHashes entries inside __APP_CONFIG__ ---
+# --- 5. loader.js special handling ---
+if [ -n "$LOADER_SRI" ]; then
+  sedi "/loader\.js/ s#integrity=\"[^\"]*\"#integrity=\"${LOADER_SRI}\"#g" index.html
+fi
+
+# --- 6. Update sriHashes entries inside __APP_CONFIG__ ---
 for f in "${ASSETS[@]}"; do
   sri="${SRI[$f]:-}"
   [ -n "$sri" ] || continue
 
-  f_basename="$(basename "$f")"
-  f_base_esc="$(sed_escape "$f_basename")"
-  sri_esc="$(printf '%s' "$sri" | sed 's|/|\\/|g')"   # ← ONLY CHANGE: escape / for replacement
+  base=$(basename "$f")
 
-  sedi "/['\"]${f_base_esc}['\"]:/ s|['\"]sha384-[^'\"]*['\"]|'${sri_esc}'|g" index.html
+  # 单引号 key
+  sedi "/'${base}':/ s#'sha384-[^']*'#'${sri}'#g" index.html
+  # 双引号 key
+  sedi "/\"${base}\":/ s#\"sha384-[^\"]*\"#\"${sri}\"#g" index.html
 done
 
 # ============ DIFF SUMMARY ============
