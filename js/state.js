@@ -1,4 +1,5 @@
-window.State = {
+window.App = window.App || {};
+App.state = {
   paragraphs: [],
   currentIndex: 0,
   isPlaying: false,
@@ -24,6 +25,7 @@ window.State = {
   initialDistance: null,
   initialFontSize: 17,
   urlParams: new URLSearchParams(window.location.search),
-  isHrefMode: function() { return this.urlParams.has('href'); },
-  isFileMode: function() { return this.urlParams.get('file') === '1'; }
+  // derived flags
+  get isHrefMode() { return this.urlParams.has('href'); },
+  get isFileMode() { return this.urlParams.get('file') === '1'; }
 };
