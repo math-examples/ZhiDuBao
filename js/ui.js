@@ -2,6 +2,7 @@ import { State } from './state.js';
 import { APP_CONFIG } from './config.js';
 import { getSynth } from './speech.js';
 import { setupBubbleSlider } from './slider.js';
+import { initTheme } from './theme.js';
 
 export function initUI() {
   const $ = (s) => document.querySelector(s);
@@ -810,6 +811,7 @@ export function initUI() {
     document.getElementById('pitchVal'),
     document.getElementById('pitch')
   );
+  initTheme();
 
   if (State.isHrefMode()) {
     mainButtons.style.display = 'none';
@@ -971,25 +973,5 @@ export function initUI() {
     log('Ready: paste text to read, or type and click Read.');
   }
 
-  (function () {
-    let i = parseInt(localStorage.getItem('bg-i') || '0');
-    const btn = document.getElementById('bgCycle');
 
-    function go(n) {
-      const tn = n + 1;
-      document.documentElement.style.setProperty('--bg', 'var(--theme-' + tn + '-bg)');
-      document.body.style.color = 'var(--theme-' + tn + '-fg)';
-      document.documentElement.style.colorScheme = (tn >= 3) ? 'dark' : 'light';
-      const icons = ['☀️', '📖', '🌗', '🌙', '⚫'];
-      btn.textContent = icons[n];
-      localStorage.setItem('bg-i', n);
-      document.documentElement.style.setProperty(
-        '--fs-btn-color',
-        'color-mix(in srgb, var(--theme-' + tn + '-fg) 78%, transparent)'
-      );
-    }
-
-    go(i);
-    btn.addEventListener('click', () => { i = (i + 1) % 5; go(i); });
-  })();
 }
