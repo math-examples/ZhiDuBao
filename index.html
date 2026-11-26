@@ -1,16 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
-  <style>
-    body { font-family: system-ui; max-width: 800px; margin: 4rem auto; padding: 0 2rem; }
-    h1 { color: #0969da; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="author" content="小洢工作室" />
+<meta name="copyright" content="© 小洢工作室. 保留所有权利." />
+<title>指读宝</title>
+
+<script>
+window.__APP_CONFIG__ = {
+  version: 'v1.0.0',
+  base: '/gh/math-examples/ZhiDuBao@',
+  files: ['config.js', 'state.js', 'ui.js', 'speech.js'],
+  sriHashes: {
+    'config.js': 'sha384-e3+TGDLCvB0GxlyNnKBtQ7zmJTbT14kCGp6ePQKbjLW0A2HeY2mxSMeN4FpKg3LY',
+    'state.js':  'sha384-YF9RuJWxYpz59WXAunvpj72EqD3likVnwzrMd1Gpv8oP1kp5e0v9erXRfYuUq2N+',
+    'ui.js':     'sha384-oYsPUtpUjJQmnJDh7PVZD5PXgK8MS0greXDl0S34vdELFlyw56EC+9bIZIsEW58L',
+    'speech.js': 'sha384-PLACEHOLDER'
+  },
+  cdns: [
+    'https://cdn.jsdelivr.net',
+    'https://gcore.jsdelivr.net'
+  ]
+};
+</script>
+
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.0/css/app.css"
+  integrity="sha384-PLACEHOLDER"
+  crossorigin="anonymous"
+  onerror="this.href='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.0/css/app.css'">
 </head>
 <body>
-  <h1>🚀 Site is live</h1>
-  <p>Push changes to this branch and GitHub Pages updates automatically.</p>
+<div class="box">
+
+  <div id="log">
+    <span class="log-text"></span>
+    <button class="fullscreen-btn" id="fs-toggle" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+      <svg id="fs-icon-expand" viewBox="0 0 24 24"><path d="M16 3h3a2 2 0 0 1 2 2v3 M8 21H5a2 2 0 0 1-2-2v-3" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
+      <svg id="fs-icon-close" style="display:none;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
+    </button>
+  </div>
+
+  <div id="empty-state">
+    <svg class="empty-icon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="url(#emptyGrad)"/><path d="M14 16... (same as original)" /></svg>
+    No text loaded.<br>Use <code>?href=...</code> to load a text file.
+  </div>
+
+  <div class="row" id="editor-controls">
+    <button id="bgCycle" class="secondary">☀️</button>
+    <select id="voiceSelect"></select>
+    <button id="showAllVoices" class="secondary">🌐 All</button>
+    <button id="about-btn" class="secondary">📋 简介</button>
+  </div>
+
+  <div class="row" id="editor-controls2">
+    <div class="bub-row">
+      <span class="bub-label">语速</span>
+      <div class="bub-wrap">
+        <div class="bub-track" id="rateTrack"><div class="bub-fill" id="rateFill"></div><div class="bub-thumb" id="rateThumb"></div><div class="bub-bubble" id="rateBubble"></div></div>
+      </div>
+      <span class="bub-value" id="rateVal">1.0</span>
+      <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1" style="display:none;" />
+    </div>
+    <div class="bub-row">
+      <span class="bub-label">音调</span>
+      <div class="bub-wrap">
+        <div class="bub-track" id="pitchTrack"><div class="bub-fill" id="pitchFill"></div><div class="bub-thumb" id="pitchThumb"></div><div class="bub-bubble" id="pitchBubble"></div></div>
+      </div>
+      <span class="bub-value" id="pitchVal">1.0</span>
+      <input type="range" id="pitch" min="0" max="2" step="0.1" value="1" style="display:none;" />
+    </div>
+  </div>
+
+  <div class="row" id="main-buttons">
+    <button id="toggle">▶ Read</button>
+    <button id="paste" class="secondary">📋 粘贴</button>
+    <button id="edit-toggle" class="secondary">✏️ 编辑</button>
+    <input type="file" id="fileInput" accept=".txt" style="display:none;" />
+  </div>
+
+  <div class="row" id="reader-controls">
+    <button id="toggle-reader">▶ Read</button>
+    <button id="back" class="secondary">✏️ 编辑</button>
+  </div>
+
+  <div id="editor">
+    <textarea id="text" placeholder="Type or paste text here to read aloud…"></textarea>
+  </div>
+
+  <div id="reader"></div>
+
+  <div class="footer-copy">© <span id="copyright-year-footer"></span> 小洢工作室. 保留所有权利.</div>
+</div>
+
+<div id="about-overlay">
+  <!-- same about card HTML as original -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.0/js/loader.js"
+  integrity="sha384-PLACEHOLDER"
+  crossorigin="anonymous"
+  onerror="this.src='https://gcore.jsdelivr.net/gh/math-examples/ZhiDuBao@v1.0.0/js/loader.js'">
+</script>
 </body>
 </html>
