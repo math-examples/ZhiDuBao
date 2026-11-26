@@ -6,20 +6,21 @@ import { setupBubbleSlider } from './slider.js';
 import { initTheme } from './theme.js';
 import {
   initVoices, setupVoiceSelectListener, setupShowAllVoicesListener,
-  switchVoiceWhilePlaying, getCurrentVoice
+  switchVoiceWhilePlaying
 } from './voice.js';
 import {
-  initReader, renderReader, speakFrom, doStop,
+  initReader, speakFrom, doStop,
   enterReaderFromEditor, exitToEditor, loadFromHref,
   getTopVisibleParagraphIndex, updateReaderBtnState
 } from './reader.js';
 import { initGesture, setupLongPress } from './gesture.js';
+import { initFullscreen, exitFullscreen, isFullscreen } from './fullscreen.js';
 
 export async function initUI() {
   const $ = (s) => document.querySelector(s);
   const synth = getSynth();
 
-  // ─── Cache ALL DOM elements once ───
+  // ─── Cache ALL DOM elements ───
   const elements = {
     logEl: $('#log'),
     logTextEl: $('#log .log-text'),
@@ -61,10 +62,8 @@ export async function initUI() {
     }
   }
 
-  // ─── Initialize modules ───
+  // ─── Initialize all modules ───
   initReader(elements, log);
-  initGesture(elements, log);
-
   initTheme();
 
   const restartPlayback = () => {
@@ -99,6 +98,9 @@ export async function initUI() {
     document.getElementById('pitch')
   );
 
+  initGesture(elements, log);
+  initFullscreen(elements);
+
   // ─── Toggle buttons ───
   elements.toggleBtn.addEventListener('click', () => {
     if (State.isPlaying) { doStop(); return; }
@@ -118,10 +120,7 @@ export async function initUI() {
     if (State.isPlaying) {
       doStop();
     } else {
-      if (State.isHrefMode() && !State.paragraphs.length) {
-        loadFromHref();
-        return;
-      }
+      if (State.isHrefMode() && !State.paragraphs.length) { loadFromHref(); return; }
       if (!State.paragraphs.length) { log('No text loaded.'); return; }
       if (!State.warmed) {
         State.warmed = true;
@@ -155,9 +154,7 @@ export async function initUI() {
           State.isPlaying = false;
           enterReaderFromEditor();
           log('Pasted ' + text.length + ' chars. Long-press a word to hear it spoken.');
-        } else {
-          log('Clipboard empty, please paste manually');
-        }
+        } else { log('Clipboard empty, please paste manually'); }
       } catch {
         elements.textEl.focus();
         log('Cannot read clipboard automatically, please long-press to paste');
@@ -196,136 +193,11 @@ export async function initUI() {
   });
 
   // ─── About overlay ───
-  elements.aboutBtn.addEventListener('click', () => { elements.aboutOverlay.classList.add('active'); });
-  elements.aboutClose.addEventListener('click', () => { elements.aboutOverlay.classList.remove('active'); });
+  elements.aboutBtn.addEventListener('click', () => elements.aboutOverlay.classList.add('active'));
+  elements.aboutClose.addEventListener('click', () => elements.aboutOverlay.classList.remove('active'));
   elements.aboutOverlay.addEventListener('click', (e) => {
     if (e.target === elements.aboutOverlay) elements.aboutOverlay.classList.remove('active');
   });
-
-  // ─── Fullscreen ───
-  let fsActive = false;
-
-  function enterFullscreen() {
-    State.fsEverClicked = true;
-    document.body.classList.add('fs-mode');
-    document.body.style.overflow = 'hidden';
-    elements.fsIconExpand.style.display = 'none';
-    elements.fsIconClose.style.display = 'block';
-    elements.fsBtn.title = 'Exit Fullscreen (Esc)';
-    fsActive = true;
-    document.body.classList.remove('log-hidden');
-    requestAnimationFrame(() => {
-      elements.reader.style.paddingTop = elements.logEl.offsetHeight + 'px';
-    });
-    State.logResizeObserver = new ResizeObserver(() => {
-      if (fsActive) elements.reader.style.paddingTop = elements.logEl.offsetHeight + 'px';
-    });
-    State.logResizeObserver.observe(elements.logEl);
-  }
-
-  function exitFullscreen() {
-    document.body.classList.remove('fs-mode');
-    document.body.style.overflow = '';
-    elements.fsIconExpand.style.display = 'block';
-    elements.fsIconClose.style.display = 'none';
-    elements.fsBtn.title = 'Toggle Fullscreen';
-    fsActive = false;
-    document.body.classList.remove('log-hidden');
-    elements.reader.style.paddingTop = '';
-    if (State.logResizeObserver) {
-      State.logResizeObserver.disconnect();
-      State.logResizeObserver = null;
-    }
-  }
-
-  function showBar() {
-    if (!State.barVisible) {
-      document.body.classList.remove('log-hidden');
-      State.barVisible = true;
-    }
-    if (State.hideTimer) { clearTimeout(State.hideTimer); State.hideTimer = null; }
-    if (fsActive && State.isPlaying) {
-      State.hideTimer = setTimeout(() => {
-        if (elements.logTextEl.textContent.startsWith('🔊')) return;
-        document.body.classList.add('log-hidden');
-        State.barVisible = false;
-      }, 3000);
-    }
-  }
-
-  function hideBar() {
-    State.lastScrollTop = elements.reader.scrollTop;
-    if (elements.logTextEl.textContent.startsWith('🔊')) return;
-    if (State.barVisible) {
-      document.body.classList.add('log-hidden');
-      State.barVisible = false;
-    }
-    if (State.hideTimer) { clearTimeout(State.hideTimer); State.hideTimer = null; }
-  }
-
-  elements.reader.addEventListener('scroll', () => {
-    if (!fsActive) return;
-    const st = elements.reader.scrollTop;
-    const maxScroll = elements.reader.scrollHeight - elements.reader.clientHeight;
-    State.barVisible = !document.body.classList.contains('log-hidden');
-    if (st <= 15 || st >= maxScroll - 15) {
-      showBar();
-      State.lastScrollTop = st;
-      return;
-    }
-    if (st > State.lastScrollTop + 15) hideBar();
-    else if (st < State.lastScrollTop - 15) showBar();
-    State.lastScrollTop = st;
-  }, { passive: true });
-
-  document.addEventListener('click', (e) => {
-    if (!fsActive) return;
-    if (e.target.closest('#log')) return;
-    State.lastScrollTop = elements.reader.scrollTop;
-    State.barVisible = !document.body.classList.contains('log-hidden');
-    if (State.isPlaying) showBar();
-    else {
-      if (State.barVisible) {
-        document.body.classList.add('log-hidden');
-        State.barVisible = false;
-      } else {
-        document.body.classList.remove('log-hidden');
-        State.barVisible = true;
-      }
-    }
-  });
-
-  // Pinch-to-zoom
-  let initialDistance = null;
-  let initialFontSize = 17;
-  elements.reader.addEventListener('touchstart', (e) => {
-    if (!fsActive) return;
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      initialDistance = Math.sqrt(dx * dx + dy * dy);
-      const sample = elements.reader.querySelector('.paragraph');
-      if (sample) initialFontSize = parseFloat(getComputedStyle(sample).fontSize);
-    }
-  }, { passive: true });
-  elements.reader.addEventListener('touchmove', (e) => {
-    if (!fsActive || e.touches.length !== 2 || !initialDistance) return;
-    e.preventDefault();
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const scale = dist / initialDistance;
-    let newSize = initialFontSize * scale;
-    newSize = Math.max(8, newSize);
-    elements.reader.querySelectorAll('.paragraph').forEach(p => {
-      p.style.fontSize = newSize + 'px';
-    });
-  }, { passive: false });
-  elements.reader.addEventListener('touchend', () => { initialDistance = null; }, { passive: true });
-
-  elements.fsBtn.addEventListener('click', () => { if (fsActive) exitFullscreen(); else enterFullscreen(); });
-
-  setupLongPress(elements.reader);
 
   // ─── Mode-based UI ───
   if (State.isHrefMode()) {
@@ -367,7 +239,7 @@ export async function initUI() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       elements.aboutOverlay.classList.remove('active');
-      if (fsActive) exitFullscreen();
+      if (isFullscreen()) exitFullscreen();
     }
   });
 
