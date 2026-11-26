@@ -39,7 +39,7 @@ export function initUI() {
     else logEl.classList.remove('has-text');
 
     if (State.clearLogTimer) { clearTimeout(State.clearLogTimer); State.clearLogTimer = null; }
-    if (msg && !msg.startsWith('”9ä0')) {
+    if (msg && !msg.startsWith('ðŸ”Š')) {
       State.clearLogTimer = setTimeout(() => { log(''); }, 3000);
     }
   }
@@ -102,7 +102,7 @@ export function initUI() {
 
     State.voices.forEach((v, i) => {
       voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' ¡¤ Cloud'}`,
+        `${v.name} (${v.lang})${v.localService ? '' : ' Â· Cloud'}`,
         i
       ));
     });
@@ -113,7 +113,7 @@ export function initUI() {
       const restoredIdx = State.voices.indexOf(previouslySelectedVoice);
       if (restoredIdx >= 0) {
         voiceSelect.value = restoredIdx;
-        log('”9ä0 ' + previouslySelectedVoice.name + ' (' + previouslySelectedVoice.lang + ')');
+        log('ðŸ”Š ' + previouslySelectedVoice.name + ' (' + previouslySelectedVoice.lang + ')');
       }
     }
   }
@@ -129,7 +129,7 @@ export function initUI() {
       State.autoSelectDone = true;
       voiceSelect.value = State.voices.indexOf(best);
       State.userSelectedVoiceRef = { name: best.name, lang: best.lang };
-      log('”9ä0 ' + best.name + ' (' + best.lang + ')');
+      log('ðŸ”Š ' + best.name + ' (' + best.lang + ')');
       filterVoiceListToLang(best.lang);
     } else {
       State.autoSelectRetries++;
@@ -141,7 +141,7 @@ export function initUI() {
           State.autoSelectDone = true;
           voiceSelect.value = State.voices.indexOf(enVoice);
           State.userSelectedVoiceRef = { name: enVoice.name, lang: enVoice.lang };
-          log('”9ä0 ' + enVoice.name + ' (' + enVoice.lang + ')');
+          log('ðŸ”Š ' + enVoice.name + ' (' + enVoice.lang + ')');
           filterVoiceListToLang(enVoice.lang);
         }
       }
@@ -158,7 +158,7 @@ export function initUI() {
     voiceSelect.innerHTML = '';
     matching.forEach(v => {
       voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' ¡¤ Cloud'}`,
+        `${v.name} (${v.lang})${v.localService ? '' : ' Â· Cloud'}`,
         State.voices.indexOf(v)
       ));
     });
@@ -167,7 +167,7 @@ export function initUI() {
       const stillThere = matching.findIndex(v => v.name === currentVoice.name && v.lang === currentVoice.lang);
       if (stillThere >= 0) {
         voiceSelect.value = State.voices.indexOf(currentVoice);
-        log('”9ä0 ' + currentVoice.name + ' (' + currentVoice.lang + ')');
+        log('ðŸ”Š ' + currentVoice.name + ' (' + currentVoice.lang + ')');
       }
     }
   }
@@ -178,7 +178,7 @@ export function initUI() {
     voiceSelect.innerHTML = '';
     State.voices.forEach((v, i) => {
       voiceSelect.appendChild(new Option(
-        `${v.name} (${v.lang})${v.localService ? '' : ' ¡¤ Cloud'}`,
+        `${v.name} (${v.lang})${v.localService ? '' : ' Â· Cloud'}`,
         i
       ));
     });
@@ -186,7 +186,7 @@ export function initUI() {
       const idx = State.voices.findIndex(v => v.name === currentVoice.name && v.lang === currentVoice.lang);
       if (idx >= 0) {
         voiceSelect.value = idx;
-        log('”9ä0 ' + currentVoice.name + ' (' + currentVoice.lang + ')');
+        log('ðŸ”Š ' + currentVoice.name + ' (' + currentVoice.lang + ')');
       }
     }
   }
@@ -203,13 +203,13 @@ export function initUI() {
   }
 
   function updateToggleBtn() {
-    toggleBtn.textContent = State.isPlaying ? '¡ö Stop' : '7œ4 Read';
+    toggleBtn.textContent = State.isPlaying ? 'â–  Stop' : 'â–¶ Read';
     toggleBtn.classList.toggle('stop-mode', State.isPlaying);
     toggleBtn.classList.toggle('secondary', !State.isPlaying);
   }
 
   function updateReaderToggleBtn() {
-    toggleReaderBtn.textContent = State.isPlaying ? '¡ö Stop' : '7œ4 Read';
+    toggleReaderBtn.textContent = State.isPlaying ? 'â–  Stop' : 'â–¶ Read';
     toggleReaderBtn.classList.toggle('stop-mode', State.isPlaying);
     toggleReaderBtn.classList.toggle('secondary', !State.isPlaying);
   }
@@ -272,7 +272,7 @@ export function initUI() {
 
     synth.speak(State.wordUtterance);
     logEl.querySelectorAll('.word-link').forEach(el => el.remove());
-    log('”9ä0 ' + word);
+    log('ðŸ”Š ' + word);
 
     document.body.classList.remove('log-hidden');
     State.barVisible = true;
@@ -282,11 +282,11 @@ export function initUI() {
     const isSingleWord = /^[a-z]+$/i.test(word.trim());
 
     const linksData = [
-      { icon: '”9ä3', label: 'Bing', url: 'https://cn.bing.com/dict/search?q=' + q },
-      { icon: '”9¾5', label: 'Cambridge', url: isSingleWord
+      { icon: 'ðŸ”', label: 'Bing', url: 'https://cn.bing.com/dict/search?q=' + q },
+      { icon: 'ðŸŽ“', label: 'Cambridge', url: isSingleWord
         ? 'https://dictionary.cambridge.org/dictionary/english/' + cambridgeWord
         : 'https://dictionary.cambridge.org/search/english/?q=' + cambridgeWord },
-      { icon: '”9Þ8', label: 'ÓÐµÀ', url: 'https://dict.youdao.com/result?word=' + q + '&lang=en' }
+      { icon: 'ðŸ“–', label: 'æœ‰é“', url: 'https://dict.youdao.com/result?word=' + q + '&lang=en' }
     ];
 
     linksData.forEach(d => {
@@ -326,7 +326,7 @@ export function initUI() {
     if (isCJK) {
       start = offset; end = offset + 1;
     } else {
-      const wordBoundaries = /[\s,.\-!?;:£¬¡££¡£¿£»£º¡¢()£¨£©[\]¡¾¡¿""''""'']/;
+      const wordBoundaries = /[\s,.\-!?;:ï¼Œã€‚ï¼ï¼Ÿï¼›ï¼šã€()ï¼ˆï¼‰[\]ã€ã€‘""''""'']/;
       start = offset; end = offset;
       while (start > 0 && !wordBoundaries.test(text[start - 1])) start--;
       while (end < text.length && !wordBoundaries.test(text[end])) end++;
@@ -347,8 +347,8 @@ export function initUI() {
         State.warmed = true;
         const w = new SpeechSynthesisUtterance(' ');
         w.volume = 0; w.rate = 10; w.pitch = 1;
-        w.onend = () => { log('7¼3 ÓïÒô³õÊ¼»¯Íê±Ï'); };
-        w.onerror = (e) => { log('7Ã4 ÓïÒô³õÊ¼»¯Ê§°Ü (' + e.error + ') ¡ª Çë³¤°´'); };
+        w.onend = () => { log('âœ… è¯­éŸ³åˆå§‹åŒ–å®Œæ¯•'); };
+        w.onerror = (e) => { log('âŒ è¯­éŸ³åˆå§‹åŒ–å¤±è´¥ (' + e.error + ') â€” è¯·é•¿æŒ‰'); };
         synth.speak(w);
         return;
       }
@@ -465,7 +465,7 @@ export function initUI() {
 
         State.currentIndex = target;
         speakFrom(target);
-        log('7œ4 From: ' + State.paragraphs[target].substring(0, 30) + '¡­');
+        log('â–¶ From: ' + State.paragraphs[target].substring(0, 30) + 'â€¦');
       });
 
       reader.appendChild(div);
@@ -514,7 +514,7 @@ export function initUI() {
           p.classList.remove('active', 'spoken');
         });
         State.currentIndex = 0;
-        log('Repeating¡­');
+        log('Repeatingâ€¦');
         State.speakTimer = setTimeout(next, 1200);
         return;
       }
@@ -632,7 +632,7 @@ export function initUI() {
     if (State.hideTimer) { clearTimeout(State.hideTimer); State.hideTimer = null; }
     if (fsActive && State.isPlaying) {
       State.hideTimer = setTimeout(() => {
-        if (logTextEl.textContent.startsWith('”9ä0')) return;
+        if (logTextEl.textContent.startsWith('ðŸ”Š')) return;
         document.body.classList.add('log-hidden');
         State.barVisible = false;
       }, 3000);
@@ -641,7 +641,7 @@ export function initUI() {
 
   function hideBar() {
     State.lastScrollTop = reader.scrollTop;
-    if (logTextEl.textContent.startsWith('”9ä0')) return;
+    if (logTextEl.textContent.startsWith('ðŸ”Š')) return;
     if (State.barVisible) {
       document.body.classList.add('log-hidden');
       State.barVisible = false;
@@ -717,7 +717,7 @@ export function initUI() {
   (function () {
     var startYear = 2026;
     var currentYear = new Date().getFullYear();
-    var text = startYear === currentYear ? String(startYear) : startYear + '¨C' + currentYear;
+    var text = startYear === currentYear ? String(startYear) : startYear + 'â€“' + currentYear;
     var aboutEl = document.getElementById('copyright-year-about');
     var footerEl = document.getElementById('copyright-year-footer');
     if (aboutEl) aboutEl.textContent = text;
@@ -735,11 +735,11 @@ export function initUI() {
       url.searchParams.delete('file');
       const paramsString = url.searchParams.toString();
       const clean = url.pathname + (paramsString ? '?' + paramsString : '');
-      el.innerHTML = '<a href="' + clean + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">”9Ý7 ¸ÄÎªÕ³ÌùÎÄ±¾</a>';
+      el.innerHTML = '<a href="' + clean + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">ðŸ“‹ æ”¹ä¸ºç²˜è´´æ–‡æœ¬</a>';
     } else {
       url.searchParams.set('file', '1');
       const paramsString = url.searchParams.toString();
-      el.innerHTML = '<a href="' + url.pathname + (paramsString ? '?' + paramsString : '') + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">”9Ü7 ´ÓÎÄ¼þ¼ÓÔØ</a>';
+      el.innerHTML = '<a href="' + url.pathname + (paramsString ? '?' + paramsString : '') + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">ðŸ“ ä»Žæ–‡ä»¶åŠ è½½</a>';
     }
   }
 
@@ -780,7 +780,7 @@ export function initUI() {
     const v = State.voices[voiceSelect.value];
     if (v) {
       State.userSelectedVoiceRef = { name: v.name, lang: v.lang };
-      log('”9ä0 ' + v.name + ' (' + v.lang + ')');
+      log('ðŸ”Š ' + v.name + ' (' + v.lang + ')');
       filterVoiceListToLang(v.lang);
     }
     if (State.isPlaying) switchVoiceWhilePlaying();
@@ -810,7 +810,7 @@ export function initUI() {
       hiddenInput.value = val.toFixed(1);
       valEl.textContent = parseFloat(val).toFixed(1);
       if (showBubble) {
-        bubbleEl.textContent = parseFloat(val).toFixed(1) + '¡Á';
+        bubbleEl.textContent = parseFloat(val).toFixed(1) + 'Ã—';
         bubbleEl.classList.add('show');
         bubbleEl.style.left = 'calc(' + pct + '% + 0px)';
       }
@@ -874,10 +874,10 @@ export function initUI() {
     backBtn.style.display = 'none';
     editToggleBtn.style.display = 'none';
   } else if (State.isFileMode()) {
-    pasteBtn.textContent = '”9Ü7 ÎÄ¼þ';
+    pasteBtn.textContent = 'ðŸ“ æ–‡ä»¶';
     editToggleBtn.style.display = 'none';
   } else {
-    textEl.placeholder = 'Type or paste text here to read aloud¡­';
+    textEl.placeholder = 'Type or paste text here to read aloudâ€¦';
   }
 
   pasteBtn.addEventListener('click', async () => {
@@ -952,7 +952,7 @@ export function initUI() {
     enterReaderFromEditor();
     State.isPlaying = true;
     updateReaderToggleBtn();
-    log('Reading¡­');
+    log('Readingâ€¦');
     speakFrom(State.currentIndex);
   });
 
@@ -974,7 +974,7 @@ export function initUI() {
       State.currentIndex = getTopVisibleParagraphIndex();
       State.isPlaying = true;
       updateReaderToggleBtn();
-      log('Reading¡­');
+      log('Readingâ€¦');
       speakFrom(State.currentIndex);
     }
   });
@@ -982,7 +982,7 @@ export function initUI() {
   function loadFromHref() {
     const href = State.urlParams.get('href');
     if (!href) return;
-    log('Loading text from ' + href + ' ¡­');
+    log('Loading text from ' + href + ' â€¦');
     fetch(href)
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1021,7 +1021,7 @@ export function initUI() {
   });
 
   if (State.isHrefMode()) {
-    log('Ready. Loading from href¡­');
+    log('Ready. Loading from hrefâ€¦');
     loadFromHref();
   } else {
     log('Ready: paste text to read, or type and click Read.');
@@ -1036,7 +1036,7 @@ export function initUI() {
       document.documentElement.style.setProperty('--bg', 'var(--theme-' + tn + '-bg)');
       document.body.style.color = 'var(--theme-' + tn + '-fg)';
       document.documentElement.style.colorScheme = (tn >= 3) ? 'dark' : 'light';
-      const icons = ['7¢7„1‚5', '”9Þ8', '”9²1', '”9²3', '7³3'];
+      const icons = ['â˜€ï¸', 'ðŸ“–', 'ðŸŒ—', 'ðŸŒ™', 'âš«'];
       btn.textContent = icons[n];
       localStorage.setItem('bg-i', n);
       document.documentElement.style.setProperty(
