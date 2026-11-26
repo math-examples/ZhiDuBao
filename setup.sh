@@ -36,7 +36,6 @@ if [ -n "${3:-}" ]; then
 elif [ -n "${SRI_VERSION:-}" ]; then
   VERSION="$SRI_VERSION"
 else
-  # Content hash from all discovered assets
   HASH=""
   if [ -d css ] || [ -d js ]; then
     {
@@ -144,13 +143,11 @@ for f in "${ASSETS[@]}"; do
   sri="${SRI[$f]:-}"
   [ -n "$sri" ] || continue
 
-  # Escape for JS object key context (e.g. 'config.js')
-  f_esc_json="$(printf '%s' "$f" | sed "s|'|\\\\'|g; s|\.|\\\\.|g")"
   f_basename="$(basename "$f")"
   f_base_esc="$(sed_escape "$f_basename")"
+  sri_esc="$(printf '%s' "$sri" | sed 's|/|\\/|g')"   # ← ONLY CHANGE: escape / for replacement
 
-  # Match: 'config.js': 'sha384-...' or "config.js": "sha384-..."
-  sedi "/['\"]${f_base_esc}['\"]:/ s|['\"]sha384-[^'\"]*['\"]|'${sri}'|g" index.html
+  sedi "/['\"]${f_base_esc}['\"]:/ s|['\"]sha384-[^'\"]*['\"]|'${sri_esc}'|g" index.html
 done
 
 # ============ DIFF SUMMARY ============
