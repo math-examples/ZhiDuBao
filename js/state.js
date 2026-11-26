@@ -1,3 +1,4 @@
+/* ===== js/state.js ===== */
 window.App = window.App || {};
 App.state = {
   paragraphs: [],
@@ -25,7 +26,6 @@ App.state = {
   initialDistance: null,
   initialFontSize: 17,
   urlParams: new URLSearchParams(window.location.search),
-  // derived flags
-  get isHrefMode() { return this.urlParams.has('href'); },
-  get isFileMode() { return this.urlParams.get('file') === '1'; }
+  isHrefMode: function () { return this.urlParams.has('href'); },
+  isFileMode: function () { return this.urlParams.get('file') === '1'; }
 };
