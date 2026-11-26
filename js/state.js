@@ -22,7 +22,6 @@ window.State = {
   clearLogTimer: null,
   initialDistance: null,
   initialFontSize: 17,
-
   urlParams: new URLSearchParams(window.location.search),
   isHrefMode: function() { return this.urlParams.has('href'); },
   isFileMode: function() { return this.urlParams.get('file') === '1'; }

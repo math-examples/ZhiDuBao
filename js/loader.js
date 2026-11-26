@@ -9,7 +9,8 @@
     tag.textContent = cfg.version.replace(/^v/, '');
     tag.addEventListener('click', function() {
       navigator.clipboard.writeText(cfg.version).then(function() {
-        var old = tag.textContent; tag.textContent = 'copied!';
+        var old = tag.textContent;
+        tag.textContent = 'copied!';
         setTimeout(function() { tag.textContent = old; }, 1000);
       });
     });
@@ -20,7 +21,8 @@
     var s = document.createElement('script');
     s.src = cfg.cdns[retry] + base + file;
     if (cfg.sriHashes[file]) {
-      s.integrity = cfg.sriHashes[file]; s.crossOrigin = 'anonymous';
+      s.integrity = cfg.sriHashes[file];
+      s.crossOrigin = 'anonymous';
     }
     s.onload = function() {
       loaded++;
@@ -30,7 +32,9 @@
       }
     };
     s.onerror = function() {
-      if (retry < cfg.cdns.length - 1) loadScript(file, retry + 1);
+      if (retry < cfg.cdns.length - 1) {
+        loadScript(file, retry + 1);
+      }
     };
     document.head.appendChild(s);
   }

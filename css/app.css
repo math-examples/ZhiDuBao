@@ -1,49 +1,72 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+     ║  ⚠️  DO NOT TOUCH #log COLOR RULES                          ║
+     ╠══════════════════════════════════════════════════════════════╣
+     ║  Chrome 113 bug: color-mix(currentColor, transparent)       ║
+     ║  → renders text INVISIBLE.                                 ║
+     ║                                                            ║
+     ║  ✗ NO color-mix() on #log color                             ║
+     ║  ✗ NO currentColor inside ANY color-mix() in #log           ║
+     ║  ✗ DO NOT "simplify" color: currentColor — it is required  ║
+     ╚══════════════════════════════════════════════════════════════╝ */
+
 :root {
   --theme-1-bg: #F5F5F7; --theme-1-fg: #1C1C1E;
   --theme-2-bg: #F4ECD8; --theme-2-fg: #3B2F1E;
   --theme-3-bg: #1C1C1E; --theme-3-fg: #F2F2F7;
   --theme-4-bg: #121212; --theme-4-fg: #E0E0E0;
   --theme-5-bg: #000000; --theme-5-fg: #E0E0E0;
+
   --primary: #007aff; --accent: #34c759; --pink: #ff6b9d; --purple: #af52de;
   --bg: var(--theme-1-bg);
   --fs-btn-color: color-mix(in srgb, currentColor 78%, transparent);
 }
+
 @media (prefers-color-scheme: dark) {
   :root { --bg: var(--theme-3-bg); }
   body { color: var(--theme-3-fg); }
 }
+
 * { box-sizing: border-box; transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease; }
+
 body {
   margin: 0; padding: 16px;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
   background: var(--bg); color: var(--theme-1-fg);
 }
 .box {
-  max-width: 720px; margin: 0 auto; background: var(--bg); border-radius: 14px; padding: 16px;
+  max-width: 720px; margin: 0 auto;
+  background: var(--bg); border-radius: 14px; padding: 16px;
   box-shadow: 0 4px 20px color-mix(in srgb, currentColor 6%, transparent);
 }
 textarea {
-  width: 100%; height: 160px; resize: vertical; padding: 12px; font-size: 16px; line-height: 1.5;
+  width: 100%; height: 160px; resize: vertical;
+  padding: 12px; font-size: 16px; line-height: 1.5;
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 10px; outline: none;
   background: transparent; color: inherit;
 }
 .row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: center; }
 select, input[type=range] { flex: 1; min-width: 120px; }
+
+/* ── select 跟随主题 ── */
 select {
-  appearance: none; -webkit-appearance: none; background-color: color-mix(in srgb, currentColor 6%, transparent);
+  appearance: none; -webkit-appearance: none;
+  background-color: color-mix(in srgb, currentColor 6%, transparent);
   color: inherit; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 10px;
   padding: 10px 32px 10px 12px; font-size: 15px; font-weight: 500;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 10px center;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; transition: background-color .25s ease, color .25s ease, border-color .25s ease;
 }
 select option { background-color: var(--bg); color: inherit; }
+
 button {
-  appearance: none; border: none; border-radius: 10px; padding: 10px 16px; font-size: 15px; font-weight: 600;
+  appearance: none; border: none; border-radius: 10px;
+  padding: 10px 16px; font-size: 15px; font-weight: 600;
   background: var(--primary); color: #fff; cursor: pointer;
 }
 button.secondary { background: color-mix(in srgb, currentColor 8%, transparent); color: inherit; }
 button.stop-mode { background: #ff3b30; color: #fff; }
 
+/* ── iOS Value Bubble Slider ── */
 .bub-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 140px; }
 .bub-label { font-size: 13px; color: currentColor; opacity: 0.55; white-space: nowrap; min-width: 28px; }
 .bub-wrap { flex: 1; position: relative; height: 36px; display: flex; align-items: center; }
@@ -79,9 +102,9 @@ button.stop-mode { background: #ff3b30; color: #fff; }
 
 #log {
   font-size: 13px; color: currentColor; white-space: pre-wrap;
-  background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(2px) saturate(110%);
-  -webkit-backdrop-filter: blur(2px) saturate(110%); border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--bg) 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(2px) saturate(110%); -webkit-backdrop-filter: blur(2px) saturate(110%);
+  border-radius: 14px; border: 1px solid color-mix(in srgb, var(--bg) 80%, transparent);
   box-shadow: 0 5px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.16);
   padding: 8px 12px; margin-bottom: 12px; min-height: 20px; position: relative; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 6px; transition: opacity 0.4s, transform 0.4s;
@@ -103,15 +126,17 @@ body.fs-mode #log, body.fs-mode #log * { zoom: 1 !important; }
 #log .log-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #log .word-link {
   flex-shrink: 1; min-width: 0; font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 600;
-  white-space: nowrap; padding: 4px 10px; border-radius: 6px; background: color-mix(in srgb, currentColor 6%, transparent);
+  white-space: nowrap; padding: 4px 10px; border-radius: 6px; background: color-mix(in srgb, currentColor 6%, transparent); transition: background 0.15s;
   max-width: 120px; overflow: hidden; text-overflow: ellipsis;
 }
 #log .word-link:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
 #log .word-link:active { background: color-mix(in srgb, currentColor 14%, transparent); }
+
 @media (max-width: 520px) {
   #log .word-link { max-width: 36px; font-size: 16px; padding: 4px 8px; text-align: center; }
   #log .word-link .link-text { display: none; }
 }
+
 #log .fullscreen-btn {
   margin-left: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; cursor: pointer; padding: 10px; border-radius: 6px;
@@ -154,4 +179,5 @@ body.fs-mode #reader { max-height: 100vh; height: 100vh; overflow-y: auto; paddi
   box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; max-height: 80vh; overflow-y: auto;
 }
 @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-/* (about card inner styles same as original) */
+
+.footer-copy { text-align: center; font-size: 11px; color: inherit; opacity: 0.4; margin-top: 12px; }
