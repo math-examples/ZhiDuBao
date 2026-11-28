@@ -15,6 +15,7 @@ import {
 } from './reader.js';
 import { initGesture, setupLongPress } from './gesture.js';
 import { initFullscreen, exitFullscreen, isFullscreen } from './fullscreen.js';
+import { initMode } from './mode.js';
 
 export async function initUI() {
   const $ = (s) => document.querySelector(s);
@@ -101,6 +102,7 @@ export async function initUI() {
   initGesture(elements, log);
   initFullscreen(elements);
   setupLongPress(elements.reader);
+  initMode(elements, log);
 
   // ─── Toggle buttons ───
   elements.toggleBtn.addEventListener('click', () => {
@@ -200,41 +202,10 @@ export async function initUI() {
     if (e.target === elements.aboutOverlay) elements.aboutOverlay.classList.remove('active');
   });
 
-  // ─── Mode-based UI ───
+  // ─── Href mode: load remote text ───
   if (State.isHrefMode()) {
-    if (elements.mainButtons) elements.mainButtons.style.display = 'none';
-    if (elements.editor) elements.editor.classList.add('hidden');
-    if (elements.emptyState) elements.emptyState.style.display = 'block';
-    if (elements.backBtn) elements.backBtn.style.display = 'none';
-    if (elements.editToggleBtn) elements.editToggleBtn.style.display = 'none';
-    log('Ready. Loading from href…');
     loadFromHref();
-  } else if (State.isFileMode()) {
-    elements.pasteBtn.textContent = '📁 文件';
-    if (elements.editToggleBtn) elements.editToggleBtn.style.display = 'none';
-  } else {
-    elements.textEl.placeholder = 'Type or paste text here to read aloud…';
-    log('Ready: paste text to read, or type and click Read.');
   }
-
-  // ─── Mode switch link ───
-  (function renderModeSwitchLink() {
-    const el = document.getElementById('modeSwitchLink');
-    if (!el) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete('href');
-    const isFileMode = url.searchParams.get('file') === '1';
-    if (isFileMode) {
-      url.searchParams.delete('file');
-      const paramsString = url.searchParams.toString();
-      const clean = url.pathname + (paramsString ? '?' + paramsString : '');
-      el.innerHTML = '<a href="' + clean + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">📋 改为粘贴文本</a>';
-    } else {
-      url.searchParams.set('file', '1');
-      const paramsString = url.searchParams.toString();
-      el.innerHTML = '<a href="' + url.pathname + (paramsString ? '?' + paramsString : '') + '" style="color:var(--primary);text-decoration:none;font-size:13px;opacity:0.8;">📁 从文件加载</a>';
-    }
-  })();
 
   // ─── Global keys ───
   document.addEventListener('keydown', (e) => {
